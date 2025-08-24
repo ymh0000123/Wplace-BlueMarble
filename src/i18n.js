@@ -321,28 +321,28 @@ const translations = {
 
   // Placeholders and help text
   'placeholder.tile_x': {
-    'en': 'Tl X',
-    'zh-cn': '瓦片 X',
-    'zh-tw': '瓦片 X',
-    'ja': 'タイル X',
-    'ko': '타일 X',
-    'es': 'Azulejo X',
-    'fr': 'Tuile X',
-    'de': 'Kachel X',
-    'ru': 'Плитка X',
-    'pt': 'Azulejo X'
+    'en': 'X coordinate',
+    'zh-cn': 'X坐标',
+    'zh-tw': 'X座標',
+    'ja': 'X座標',
+    'ko': 'X좌표',
+    'es': 'Coordenada X',
+    'fr': 'Coordonnée X',
+    'de': 'X-Koordinate',
+    'ru': 'Координата X',
+    'pt': 'Coordenada X'
   },
   'placeholder.tile_y': {
-    'en': 'Tl Y',
-    'zh-cn': '瓦片 Y',
-    'zh-tw': '瓦片 Y',
-    'ja': 'タイル Y',
-    'ko': '타일 Y',
-    'es': 'Azulejo Y',
-    'fr': 'Tuile Y',
-    'de': 'Kachel Y',
-    'ru': 'Плитка Y',
-    'pt': 'Azulejo Y'
+    'en': 'Y coordinate',
+    'zh-cn': 'Y坐标',
+    'zh-tw': 'Y座標',
+    'ja': 'Y座標',
+    'ko': 'Y좌표',
+    'es': 'Coordenada Y',
+    'fr': 'Coordonnée Y',
+    'de': 'Y-Koordinate',
+    'ru': 'Координата Y',
+    'pt': 'Coordenada Y'
   },
   'placeholder.pixel_x': {
     'en': 'Px X',

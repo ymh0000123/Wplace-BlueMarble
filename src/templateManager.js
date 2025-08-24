@@ -1,5 +1,6 @@
 import Template from "./Template";
 import { base64ToUint8, numberToEncoded } from "./utils";
+import { t } from './i18n.js';
 
 /** Manages the template system.
  * This class handles all external requests for template modification, creation, and analysis.

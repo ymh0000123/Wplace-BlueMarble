@@ -3,6 +3,9 @@
  * @class Observers
  * @since 0.43.2
  */
+
+import { t } from './i18n.js';
+
 export default class Observers {
 
   /** The constructor for the observer class

@@ -1,4 +1,5 @@
 import { uint8ToBase64, colorpalette } from "./utils";
+import { t } from './i18n.js';
 
 /** An instance of a template.
  * Handles all mathematics, manipulation, and analysis regarding a single template.

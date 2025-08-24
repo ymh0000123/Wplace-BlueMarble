@@ -6,6 +6,7 @@
 
 import TemplateManager from "./templateManager.js";
 import { consoleError, escapeHTML, numberToEncoded, serverTPtoDisplayTP } from "./utils.js";
+import { t } from './i18n.js';
 
 export default class ApiManager {
 

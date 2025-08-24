@@ -7,6 +7,7 @@ import Observers from './observers.js';
 import ApiManager from './apiManager.js';
 import TemplateManager from './templateManager.js';
 import { consoleLog, consoleWarn, selectAllCoordinateInputs } from './utils.js';
+import { t, setLanguage, getCurrentLanguage, getAvailableLanguages } from './i18n.js';
 
 const name = GM_info.script.name.toString(); // Name of userscript
 const version = GM_info.script.version.toString(); // Version of userscript
@@ -212,7 +213,7 @@ apiManager.spontaneousResponseListener(overlayMain); // Reads spontaneous fetch 
 
 observeBlack(); // Observes the black palette color
 
-consoleLog(`%c${name}%c (${version}) userscript has loaded!`, 'color: cornflowerblue;', '');
+consoleLog(`%c${name}%c ${t('console.userscript_loaded', { version })}`, 'color: cornflowerblue;', '');
 
 /** Observe the black color, and add the "Move" button.
  * @since 0.66.3
@@ -230,17 +231,17 @@ function observeBlack() {
     if (!move) {
       move = document.createElement('button');
       move.id = 'bm-button-move';
-      move.textContent = 'Move ↑';
+      move.textContent = t('ui.move_up');
       move.className = 'btn btn-soft';
       move.onclick = function() {
         const roundedBox = this.parentNode.parentNode.parentNode.parentNode; // Obtains the rounded box
-        const shouldMoveUp = (this.textContent == 'Move ↑');
+        const shouldMoveUp = (this.textContent == t('ui.move_up'));
         roundedBox.parentNode.className = roundedBox.parentNode.className.replace(shouldMoveUp ? 'bottom' : 'top', shouldMoveUp ? 'top' : 'bottom'); // Moves the rounded box to the top
         roundedBox.style.borderTopLeftRadius = shouldMoveUp ? '0px' : 'var(--radius-box)';
         roundedBox.style.borderTopRightRadius = shouldMoveUp ? '0px' : 'var(--radius-box)';
         roundedBox.style.borderBottomLeftRadius = shouldMoveUp ? 'var(--radius-box)' : '0px';
         roundedBox.style.borderBottomRightRadius = shouldMoveUp ? 'var(--radius-box)' : '0px';
-        this.textContent = shouldMoveUp ? 'Move ↓' : 'Move ↑';
+        this.textContent = shouldMoveUp ? t('ui.move_down') : t('ui.move_up');
       }
 
       // Attempts to find the "Paint Pixel" element for anchoring
@@ -278,7 +279,7 @@ function buildOverlayMain() {
   overlayMain.addDiv({'id': 'bm-overlay', 'style': 'top: 10px; right: 75px;'})
     .addDiv({'id': 'bm-contain-header'})
       .addDiv({'id': 'bm-bar-drag'}).buildElement()
-      .addImg({'alt': 'Blue Marble Icon - Click to minimize/maximize', 'src': 'https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/assets/Favicon.png', 'style': 'cursor: pointer;'}, 
+      .addImg({'alt': t('tooltip.minimize_maximize'), 'src': 'https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/assets/Favicon.png', 'style': 'cursor: pointer;'}, 
         (instance, img) => {
           /** Click event handler for overlay minimize/maximize functionality.
            * 
@@ -468,8 +469,8 @@ function buildOverlayMain() {
             
             // Update alt text to reflect current state for screen readers and tooltips
             img.alt = isMinimized ? 
-              'Blue Marble Icon - Minimized (Click to maximize)' : 
-              'Blue Marble Icon - Maximized (Click to minimize)';
+              t('tooltip.minimized') : 
+              t('tooltip.maximized');
             
             // No status message needed - state change is visually obvious to users
           });
@@ -481,9 +482,37 @@ function buildOverlayMain() {
     .addHr().buildElement()
 
     .addDiv({'id': 'bm-contain-userinfo'})
-      .addP({'id': 'bm-user-name', 'textContent': 'Username:'}).buildElement()
-      .addP({'id': 'bm-user-droplets', 'textContent': 'Droplets:'}).buildElement()
-      .addP({'id': 'bm-user-nextlevel', 'textContent': 'Next level in...'}).buildElement()
+      .addP({'id': 'bm-user-name', 'textContent': t('ui.username')}).buildElement()
+      .addP({'id': 'bm-user-droplets', 'textContent': t('ui.droplets')}).buildElement()
+      .addP({'id': 'bm-user-nextlevel', 'textContent': t('ui.next_level')}).buildElement()
+      .addDiv({'style': 'display: flex; align-items: center; gap: 8px; margin-top: 8px;'})
+        .addSmall({'textContent': t('ui.language'), 'style': 'margin: 0;'}).buildElement()
+        .addSelect({'id': 'bm-language-selector', 'style': 'padding: 2px 4px; font-size: 11px;'}, (instance, select) => {
+          // Add language options
+          const languages = getAvailableLanguages();
+          const currentLang = getCurrentLanguage();
+          
+          languages.forEach(lang => {
+            const option = document.createElement('option');
+            option.value = lang;
+            option.textContent = t(`lang.${lang}`);
+            if (lang === currentLang) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+
+          // Handle language change
+          select.addEventListener('change', (event) => {
+            const newLanguage = event.target.value;
+            setLanguage(newLanguage);
+            
+            // Refresh the entire interface by reloading the page
+            // This is the simplest way to ensure all text is updated
+            location.reload();
+          });
+        }).buildElement()
+      .buildElement()
     .buildElement()
 
     .addHr().buildElement()
@@ -501,7 +530,7 @@ function buildOverlayMain() {
             button.onclick = () => {
               const coords = instance.apiManager?.coordsTilePixel; // Retrieves the coords from the API manager
               if (!coords?.[0]) {
-                instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?');
+                instance.handleDisplayError(t('error.coordinates_malformed'));
                 return;
               }
               instance.updateInnerHTML('bm-input-tx', coords?.[0] || '');
@@ -512,7 +541,7 @@ function buildOverlayMain() {
             }
           }
         ).buildElement()
-        .addInput({'type': 'number', 'id': 'bm-input-tx', 'placeholder': 'Tl X', 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.tx ?? '')}, (instance, input) => {
+        .addInput({'type': 'number', 'id': 'bm-input-tx', 'placeholder': t('placeholder.tile_x'), 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.tx ?? '')}, (instance, input) => {
           //if a paste happens on tx, split and format it into other coordinates if possible
           input.addEventListener("paste", (event) => {
             let splitText = (event.clipboardData || window.clipboardData).getData("text").split(" ").filter(n => n).map(Number).filter(n => !isNaN(n)); //split and filter all Non Numbers
@@ -533,17 +562,17 @@ function buildOverlayMain() {
           input.addEventListener('input', handler);
           input.addEventListener('change', handler);
         }).buildElement()
-        .addInput({'type': 'number', 'id': 'bm-input-ty', 'placeholder': 'Tl Y', 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.ty ?? '')}, (instance, input) => {
+        .addInput({'type': 'number', 'id': 'bm-input-ty', 'placeholder': t('placeholder.tile_y'), 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.ty ?? '')}, (instance, input) => {
           const handler = () => persistCoords();
           input.addEventListener('input', handler);
           input.addEventListener('change', handler);
         }).buildElement()
-        .addInput({'type': 'number', 'id': 'bm-input-px', 'placeholder': 'Px X', 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.px ?? '')}, (instance, input) => {
+        .addInput({'type': 'number', 'id': 'bm-input-px', 'placeholder': t('placeholder.pixel_x'), 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.px ?? '')}, (instance, input) => {
           const handler = () => persistCoords();
           input.addEventListener('input', handler);
           input.addEventListener('change', handler);
         }).buildElement()
-        .addInput({'type': 'number', 'id': 'bm-input-py', 'placeholder': 'Px Y', 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.py ?? '')}, (instance, input) => {
+        .addInput({'type': 'number', 'id': 'bm-input-py', 'placeholder': t('placeholder.pixel_y'), 'min': 0, 'max': 2047, 'step': 1, 'required': true, 'value': (savedCoords.py ?? '')}, (instance, input) => {
           const handler = () => persistCoords();
           input.addEventListener('input', handler);
           input.addEventListener('change', handler);
@@ -552,50 +581,50 @@ function buildOverlayMain() {
       // Color filter UI
       .addDiv({'id': 'bm-contain-colorfilter', 'style': 'max-height: 140px; overflow: auto; border: 1px solid rgba(255,255,255,0.1); padding: 4px; border-radius: 4px; display: none;'})
         .addDiv({'style': 'display: flex; gap: 6px; margin-bottom: 6px;'})
-          .addButton({'id': 'bm-button-colors-enable-all', 'textContent': 'Enable All'}, (instance, button) => {
+          .addButton({'id': 'bm-button-colors-enable-all', 'textContent': t('ui.enable_all')}, (instance, button) => {
             button.onclick = () => {
               const t = templateManager.templatesArray[0];
               if (!t?.colorPalette) { return; }
               Object.values(t.colorPalette).forEach(v => v.enabled = true);
               buildColorFilterList();
-              instance.handleDisplayStatus('Enabled all colors');
+              instance.handleDisplayStatus(t('message.enabled_all_colors'));
             };
           }).buildElement()
-          .addButton({'id': 'bm-button-colors-disable-all', 'textContent': 'Disable All'}, (instance, button) => {
+          .addButton({'id': 'bm-button-colors-disable-all', 'textContent': t('ui.disable_all')}, (instance, button) => {
             button.onclick = () => {
               const t = templateManager.templatesArray[0];
               if (!t?.colorPalette) { return; }
               Object.values(t.colorPalette).forEach(v => v.enabled = false);
               buildColorFilterList();
-              instance.handleDisplayStatus('Disabled all colors');
+              instance.handleDisplayStatus(t('message.disabled_all_colors'));
             };
           }).buildElement()
         .buildElement()
         .addDiv({'id': 'bm-colorfilter-list'}).buildElement()
       .buildElement()
-      .addInputFile({'id': 'bm-input-file-template', 'textContent': 'Upload Template', 'accept': 'image/png, image/jpeg, image/webp, image/bmp, image/gif'}).buildElement()
+      .addInputFile({'id': 'bm-input-file-template', 'textContent': t('ui.upload_template'), 'accept': 'image/png, image/jpeg, image/webp, image/bmp, image/gif'}).buildElement()
       .addDiv({'id': 'bm-contain-buttons-template'})
-        .addButton({'id': 'bm-button-enable', 'textContent': 'Enable'}, (instance, button) => {
+        .addButton({'id': 'bm-button-enable', 'textContent': t('ui.enable')}, (instance, button) => {
           button.onclick = () => {
             instance.apiManager?.templateManager?.setTemplatesShouldBeDrawn(true);
-            instance.handleDisplayStatus(`Enabled templates!`);
+            instance.handleDisplayStatus(t('message.enabled_templates'));
           }
         }).buildElement()
-        .addButton({'id': 'bm-button-create', 'textContent': 'Create'}, (instance, button) => {
+        .addButton({'id': 'bm-button-create', 'textContent': t('ui.create')}, (instance, button) => {
           button.onclick = () => {
             const input = document.querySelector('#bm-input-file-template');
 
             const coordTlX = document.querySelector('#bm-input-tx');
-            if (!coordTlX.checkValidity()) {coordTlX.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            if (!coordTlX.checkValidity()) {coordTlX.reportValidity(); instance.handleDisplayError(t('error.coordinates_malformed')); return;}
             const coordTlY = document.querySelector('#bm-input-ty');
-            if (!coordTlY.checkValidity()) {coordTlY.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            if (!coordTlY.checkValidity()) {coordTlY.reportValidity(); instance.handleDisplayError(t('error.coordinates_malformed')); return;}
             const coordPxX = document.querySelector('#bm-input-px');
-            if (!coordPxX.checkValidity()) {coordPxX.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            if (!coordPxX.checkValidity()) {coordPxX.reportValidity(); instance.handleDisplayError(t('error.coordinates_malformed')); return;}
             const coordPxY = document.querySelector('#bm-input-py');
-            if (!coordPxY.checkValidity()) {coordPxY.reportValidity(); instance.handleDisplayError('Coordinates are malformed! Did you try clicking on the canvas first?'); return;}
+            if (!coordPxY.checkValidity()) {coordPxY.reportValidity(); instance.handleDisplayError(t('error.coordinates_malformed')); return;}
 
             // Kills itself if there is no file
-            if (!input?.files[0]) {instance.handleDisplayError(`No file selected!`); return;}
+            if (!input?.files[0]) {instance.handleDisplayError(t('error.no_file_selected')); return;}
 
             templateManager.createTemplate(input.files[0], input.files[0]?.name.replace(/\.[^/.]+$/, ''), [Number(coordTlX.value), Number(coordTlY.value), Number(coordPxX.value), Number(coordPxY.value)]);
 
@@ -604,36 +633,36 @@ function buildOverlayMain() {
             // console.log(`TCoords: ${apiManager.templateCoordsTilePixel}\nCoords: ${apiManager.coordsTilePixel}`);
             // templateManager.setTemplateImage(input.files[0]);
 
-            instance.handleDisplayStatus(`Drew to canvas!`);
+            instance.handleDisplayStatus(t('message.drew_to_canvas'));
           }
         }).buildElement()
-        .addButton({'id': 'bm-button-disable', 'textContent': 'Disable'}, (instance, button) => {
+        .addButton({'id': 'bm-button-disable', 'textContent': t('ui.disable')}, (instance, button) => {
           button.onclick = () => {
             instance.apiManager?.templateManager?.setTemplatesShouldBeDrawn(false);
-            instance.handleDisplayStatus(`Disabled templates!`);
+            instance.handleDisplayStatus(t('message.disabled_templates'));
           }
         }).buildElement()
       .buildElement()
-      .addTextarea({'id': overlayMain.outputStatusId, 'placeholder': `Status: Sleeping...\nVersion: ${version}`, 'readOnly': true}).buildElement()
+      .addTextarea({'id': overlayMain.outputStatusId, 'placeholder': t('placeholder.status_sleeping', { version }), 'readOnly': true}).buildElement()
       .addDiv({'id': 'bm-contain-buttons-action'})
         .addDiv()
           // .addButton({'id': 'bm-button-teleport', 'className': 'bm-help', 'textContent': '✈'}).buildElement()
           // .addButton({'id': 'bm-button-favorite', 'className': 'bm-help', 'innerHTML': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><polygon points="10,2 12,7.5 18,7.5 13.5,11.5 15.5,18 10,14 4.5,18 6.5,11.5 2,7.5 8,7.5" fill="white"></polygon></svg>'}).buildElement()
           // .addButton({'id': 'bm-button-templates', 'className': 'bm-help', 'innerHTML': '🖌'}).buildElement()
-          .addButton({'id': 'bm-button-convert', 'className': 'bm-help', 'innerHTML': '🎨', 'title': 'Template Color Converter'}, 
+          .addButton({'id': 'bm-button-convert', 'className': 'bm-help', 'innerHTML': '🎨', 'title': t('tooltip.template_color_converter')}, 
             (instance, button) => {
             button.addEventListener('click', () => {
               window.open('https://pepoafonso.github.io/color_converter_wplace/', '_blank', 'noopener noreferrer');
             });
           }).buildElement()
-          .addButton({'id': 'bm-button-website', 'className': 'bm-help', 'innerHTML': '🌐', 'title': 'Official Blue Marble Website'}, 
+          .addButton({'id': 'bm-button-website', 'className': 'bm-help', 'innerHTML': '🌐', 'title': t('tooltip.official_website')}, 
             (instance, button) => {
             button.addEventListener('click', () => {
               window.open('https://bluemarble.camilledaguin.fr/', '_blank', 'noopener noreferrer');
             });
           }).buildElement()
         .buildElement()
-        .addSmall({'textContent': 'Made by SwingTheVine', 'style': 'margin-top: auto;'}).buildElement()
+        .addSmall({'textContent': t('ui.made_by'), 'style': 'margin-top: auto;'}).buildElement()
       .buildElement()
     .buildElement()
   .buildOverlay(document.body);
@@ -643,7 +672,7 @@ function buildOverlayMain() {
     const listContainer = document.querySelector('#bm-colorfilter-list');
     const t = templateManager.templatesArray?.[0];
     if (!listContainer || !t?.colorPalette) {
-      if (listContainer) { listContainer.innerHTML = '<small>No template colors to display.</small>'; }
+      if (listContainer) { listContainer.innerHTML = `<small>${t('placeholder.no_template_colors')}</small>`; }
       return;
     }
 
@@ -670,10 +699,10 @@ function buildOverlayMain() {
       // Special handling for "other" and "transparent"
       if (rgb === 'other') {
         swatch.style.background = '#888'; // Neutral color for "Other"
-        labelText = `Other • ${labelText}`;
+        labelText = `${t('color.other')} • ${labelText}`;
       } else if (rgb === '#deface') {
         swatch.style.background = '#deface';
-        labelText = `Transparent • ${labelText}`;
+        labelText = `${t('color.transparent')} • ${labelText}`;
       } else {
         const [r, g, b] = rgb.split(',').map(Number);
         swatch.style.background = `rgb(${r},${g},${b})`;
@@ -735,14 +764,14 @@ function buildTelemetryOverlay(overlay) {
   overlay.addDiv({'id': 'bm-overlay-telemetry', style: 'top: 0px; left: 0px; width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; z-index: 9999;'})
     .addDiv({'id': 'bm-contain-all-telemetry', style: 'display: flex; flex-direction: column; align-items: center;'})
       .addDiv({'id': 'bm-contain-header-telemetry', style: 'margin-top: 10%;'})
-        .addHeader(1, {'textContent': `${name} Telemetry`}).buildElement()
+        .addHeader(1, {'textContent': t('telemetry.title', { name })}).buildElement()
       .buildElement()
 
       .addDiv({'id': 'bm-contain-telemetry', style: 'max-width: 50%; overflow-y: auto; max-height: 80vh;'})
         .addHr().buildElement()
         .addBr().buildElement()
         .addDiv({'style': 'width: fit-content; margin: auto; text-align: center;'})
-        .addButton({'id': 'bm-button-telemetry-more', 'textContent': 'More Information'}, (instance, button) => {
+        .addButton({'id': 'bm-button-telemetry-more', 'textContent': t('telemetry.more_info')}, (instance, button) => {
           button.onclick = () => {
             window.open('https://github.com/SwingTheVine/Wplace-TelemetryServer#telemetry-data', '_blank', 'noopener noreferrer');
           }
@@ -750,7 +779,7 @@ function buildTelemetryOverlay(overlay) {
         .buildElement()
         .addBr().buildElement()
         .addDiv({style: 'width: fit-content; margin: auto; text-align: center;'})
-          .addButton({'id': 'bm-button-telemetry-enable', 'textContent': 'Enable Telemetry', 'style': 'margin-right: 2ch;'}, (instance, button) => {
+          .addButton({'id': 'bm-button-telemetry-enable', 'textContent': t('telemetry.enable'), 'style': 'margin-right: 2ch;'}, (instance, button) => {
             button.onclick = () => {
               const userSettings = JSON.parse(GM_getValue('bmUserSettings', '{}'));
               userSettings.telemetry = 1;
@@ -761,7 +790,7 @@ function buildTelemetryOverlay(overlay) {
               }
             }
           }).buildElement()
-          .addButton({'id': 'bm-button-telemetry-disable', 'textContent': 'Disable Telemetry'}, (instance, button) => {
+          .addButton({'id': 'bm-button-telemetry-disable', 'textContent': t('telemetry.disable')}, (instance, button) => {
             button.onclick = () => {
               const userSettings = JSON.parse(GM_getValue('bmUserSettings', '{}'));
               userSettings.telemetry = 0;
@@ -774,8 +803,8 @@ function buildTelemetryOverlay(overlay) {
           }).buildElement()
         .buildElement()
         .addBr().buildElement()
-        .addP({'textContent': 'We collect anonymous telemetry data such as your browser, OS, and script version to make the experience better for everyone. The data is never shared personally. The data is never sold. You can turn this off by pressing the \'Disable\' button, but keeping it on helps us improve features and reliability faster. Thank you for supporting the Blue Marble!'}).buildElement()
-        .addP({'textContent': 'You can disable telemetry by pressing the "Disable" button below.'}).buildElement()
+        .addP({'textContent': t('telemetry.description')}).buildElement()
+        .addP({'textContent': t('telemetry.disable_info')}).buildElement()
       .buildElement()
     .buildElement()
   .buildOverlay(document.body);

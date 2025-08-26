@@ -169,16 +169,16 @@ const translations = {
     'pt': 'Desativar Todos'
   },
   'ui.made_by': {
-    'en': 'Made by SwingTheVine',
-    'zh-cn': '由 SwingTheVine 制作',
-    'zh-tw': '由 SwingTheVine 製作',
-    'ja': 'SwingTheVine 制作',
-    'ko': 'SwingTheVine 제작',
-    'es': 'Hecho por SwingTheVine',
-    'fr': 'Fait par SwingTheVine',
-    'de': 'Erstellt von SwingTheVine',
-    'ru': 'Создано SwingTheVine',
-    'pt': 'Feito por SwingTheVine'
+    'en': 'Made by SwingTheVine, AI-enhanced by xiaofeishu',
+    'zh-cn': '由 SwingTheVine 制作 由 xiaofeishu 使用AI增强',
+    'zh-tw': '由 SwingTheVine 製作 由 xiaofeishu 使用AI增強',
+    'ja': 'SwingTheVine 制作、xiaofeishu によるAI強化',
+    'ko': 'SwingTheVine 제작, xiaofeishu 에 의해 AI 강화',
+    'es': 'Hecho por SwingTheVine, mejorado con IA por xiaofeishu',
+    'fr': 'Fait par SwingTheVine, amélioré par IA par xiaofeishu',
+    'de': 'Erstellt von SwingTheVine, KI-verbessert von xiaofeishu',
+    'ru': 'Создано SwingTheVine, улучшено с помощью ИИ xiaofeishu',
+    'pt': 'Feito por SwingTheVine, aprimorado por IA por xiaofeishu'
   },
   'ui.simplified_mode': {
     'en': 'Simplified Mode',

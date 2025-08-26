@@ -61,16 +61,40 @@ const translations = {
     'pt': 'Gotas:'
   },
   'ui.next_level': {
-    'en': 'Next level in...',
-    'zh-cn': '下一级需要...',
-    'zh-tw': '下一級需要...',
-    'ja': '次のレベルまで...',
-    'ko': '다음 레벨까지...',
-    'es': 'Siguiente nivel en...',
-    'fr': 'Niveau suivant dans...',
-    'de': 'Nächstes Level in...',
-    'ru': 'Следующий уровень через...',
-    'pt': 'Próximo nível em...'
+    'en': 'Next level in',
+    'zh-cn': '下一级需要',
+    'zh-tw': '下一級需要',
+    'ja': '次のレベルまで',
+    'ko': '다음 레벨까지',
+    'es': 'Siguiente nivel en',
+    'fr': 'Niveau suivant dans',
+    'de': 'Nächstes Level in',
+    'ru': 'Следующий уровень через',
+    'pt': 'Próximo nível em'
+  },
+  'ui.pixel': {
+    'en': 'pixel',
+    'zh-cn': '像素',
+    'zh-tw': '像素',
+    'ja': 'ピクセル',
+    'ko': '픽셀',
+    'es': 'píxel',
+    'fr': 'pixel',
+    'de': 'Pixel',
+    'ru': 'пиксель',
+    'pt': 'pixel'
+  },
+  'ui.pixels': {
+    'en': 'pixels',
+    'zh-cn': '像素',
+    'zh-tw': '像素',
+    'ja': 'ピクセル',
+    'ko': '픽셀',
+    'es': 'píxeles',
+    'fr': 'pixels',
+    'de': 'Pixel',
+    'ru': 'пикселей',
+    'pt': 'pixels'
   },
   'ui.upload_template': {
     'en': 'Upload Template',

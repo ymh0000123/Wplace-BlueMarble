@@ -74,9 +74,9 @@ export default class ApiManager {
           }
           this.templateManager.userID = dataJSON['id'];
           
-          overlay.updateInnerHTML('bm-user-name', `Username: <b>${escapeHTML(dataJSON['name'])}</b>`); // Updates the text content of the username field
-          overlay.updateInnerHTML('bm-user-droplets', `Droplets: <b>${new Intl.NumberFormat().format(dataJSON['droplets'])}</b>`); // Updates the text content of the droplets field
-          overlay.updateInnerHTML('bm-user-nextlevel', `Next level in <b>${new Intl.NumberFormat().format(nextLevelPixels)}</b> pixel${nextLevelPixels == 1 ? '' : 's'}`); // Updates the text content of the next level field
+          overlay.updateInnerHTML('bm-user-name', `${t('ui.username')} <b>${escapeHTML(dataJSON['name'])}</b>`); // Updates the text content of the username field
+          overlay.updateInnerHTML('bm-user-droplets', `${t('ui.droplets')} <b>${new Intl.NumberFormat().format(dataJSON['droplets'])}</b>`); // Updates the text content of the droplets field
+          overlay.updateInnerHTML('bm-user-nextlevel', `${t('ui.next_level')} <b>${new Intl.NumberFormat().format(nextLevelPixels)}</b> ${nextLevelPixels == 1 ? t('ui.pixel') : t('ui.pixels')}`); // Updates the text content of the next level field
           break;
 
         case 'pixel': // Request to retrieve pixel data

@@ -180,6 +180,30 @@ const translations = {
     'ru': 'Создано SwingTheVine',
     'pt': 'Feito por SwingTheVine'
   },
+  'ui.simplified_mode': {
+    'en': 'Simplified Mode',
+    'zh-cn': '精简模式',
+    'zh-tw': '精簡模式',
+    'ja': 'シンプルモード',
+    'ko': '간소 모드',
+    'es': 'Modo Simplificado',
+    'fr': 'Mode Simplifié',
+    'de': 'Vereinfachter Modus',
+    'ru': 'Упрощенный Режим',
+    'pt': 'Modo Simplificado'
+  },
+  'ui.toggle_simplified': {
+    'en': 'Toggle Simplified View',
+    'zh-cn': '切换精简视图',
+    'zh-tw': '切換精簡視圖',
+    'ja': 'シンプル表示の切り替え',
+    'ko': '간소 보기 전환',
+    'es': 'Alternar Vista Simplificada',
+    'fr': 'Basculer Vue Simplifiée',
+    'de': 'Vereinfachte Ansicht Umschalten',
+    'ru': 'Переключить Упрощенный Вид',
+    'pt': 'Alternar Visualização Simplificada'
+  },
 
   // Messages
   'message.enabled_templates': {

@@ -262,9 +262,17 @@ function observeBlack() {
  */
 function buildOverlayMain() {
   let isMinimized = false; // Overlay state tracker (false = maximized, true = minimized)
-  // Load last saved coordinates (if any)
+  let isSimplified = false; // Simplified mode tracker (false = normal, true = simplified)
+  
+  // Load last saved coordinates and mode preferences (if any)
   let savedCoords = {};
+  let savedPrefs = {};
   try { savedCoords = JSON.parse(GM_getValue('bmCoords', '{}')) || {}; } catch (_) { savedCoords = {}; }
+  try { savedPrefs = JSON.parse(GM_getValue('bmUIPrefs', '{}')) || {}; } catch (_) { savedPrefs = {}; }
+  
+  // Restore simplified mode state from saved preferences
+  isSimplified = savedPrefs.isSimplified || false;
+  
   const persistCoords = () => {
     try {
       const tx = Number(document.querySelector('#bm-input-tx')?.value || '');
@@ -276,206 +284,247 @@ function buildOverlayMain() {
     } catch (_) {}
   };
   
+  const persistUIPrefs = () => {
+    try {
+      const prefs = { isSimplified };
+      GM.setValue('bmUIPrefs', JSON.stringify(prefs));
+    } catch (_) {}
+  };
+  
   overlayMain.addDiv({'id': 'bm-overlay', 'style': 'top: 10px; right: 75px;'})
     .addDiv({'id': 'bm-contain-header'})
       .addDiv({'id': 'bm-bar-drag'}).buildElement()
-      .addImg({'alt': t('tooltip.minimize_maximize'), 'src': 'https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/assets/Favicon.png', 'style': 'cursor: pointer;'}, 
-        (instance, img) => {
-          /** Click event handler for overlay minimize/maximize functionality.
-           * 
-           * Toggles between two distinct UI states:
-           * 1. MINIMIZED STATE (60×76px):
-           *    - Shows only the Blue Marble icon and drag bar
-           *    - Hides all input fields, buttons, and status information
-           *    - Applies fixed dimensions for consistent appearance
-           *    - Repositions icon with 3px right offset for visual centering
-           * 
-           * 2. MAXIMIZED STATE (responsive):
-           *    - Restores full functionality with all UI elements
-           *    - Removes fixed dimensions to allow responsive behavior
-           *    - Resets icon positioning to default alignment
-           *    - Shows success message when returning to maximized state
-           * 
-           * @param {Event} event - The click event object (implicit)
-           */
-          img.addEventListener('click', () => {
-            isMinimized = !isMinimized; // Toggle the current state
+      .addDiv({'style': 'display: flex; align-items: center; justify-content: space-between;'})
+        .addImg({'alt': t('tooltip.minimize_maximize'), 'src': 'https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/assets/Favicon.png', 'style': 'cursor: pointer;'}, 
+          (instance, img) => {
+            /** Click event handler for overlay minimize/maximize functionality.
+             * 
+             * Toggles between two distinct UI states:
+             * 1. MINIMIZED STATE (60×76px):
+             *    - Shows only the Blue Marble icon and drag bar
+             *    - Hides all input fields, buttons, and status information
+             *    - Applies fixed dimensions for consistent appearance
+             *    - Repositions icon with 3px right offset for visual centering
+             * 
+             * 2. MAXIMIZED STATE (responsive):
+             *    - Restores full functionality with all UI elements
+             *    - Removes fixed dimensions to allow responsive behavior
+             *    - Resets icon positioning to default alignment
+             *    - Shows success message when returning to maximized state
+             * 
+             * @param {Event} event - The click event object (implicit)
+             */
+            img.addEventListener('click', () => {
+              isMinimized = !isMinimized; // Toggle the current state
 
-            const overlay = document.querySelector('#bm-overlay');
-            const header = document.querySelector('#bm-contain-header');
-            const dragBar = document.querySelector('#bm-bar-drag');
-            const coordsContainer = document.querySelector('#bm-contain-coords');
-            const coordsButton = document.querySelector('#bm-button-coords');
-            const createButton = document.querySelector('#bm-button-create');
-            const enableButton = document.querySelector('#bm-button-enable');
-            const disableButton = document.querySelector('#bm-button-disable');
-            const coordInputs = document.querySelectorAll('#bm-contain-coords input');
-            
-            // Pre-restore original dimensions when switching to maximized state
-            // This ensures smooth transition and prevents layout issues
-            if (!isMinimized) {
-              overlay.style.width = "auto";
-              overlay.style.maxWidth = "300px";
-              overlay.style.minWidth = "200px";
-              overlay.style.padding = "10px";
-            }
-            
-            // Define elements that should be hidden/shown during state transitions
-            // Each element is documented with its purpose for maintainability
-            const elementsToToggle = [
-              '#bm-overlay h1',                    // Main title "Blue Marble"
-              '#bm-contain-userinfo',              // User information section (username, droplets, level)
-              '#bm-overlay hr',                    // Visual separator lines
-              '#bm-contain-automation > *:not(#bm-contain-coords)', // Automation section excluding coordinates
-              '#bm-input-file-template',           // Template file upload interface
-              '#bm-contain-buttons-action',        // Action buttons container
-              `#${instance.outputStatusId}`,       // Status log textarea for user feedback
-              '#bm-contain-colorfilter'            // Color filter UI
-            ];
-            
-            // Apply visibility changes to all toggleable elements
-            elementsToToggle.forEach(selector => {
-              const elements = document.querySelectorAll(selector);
-              elements.forEach(element => {
-                element.style.display = isMinimized ? 'none' : '';
+              const overlay = document.querySelector('#bm-overlay');
+              const header = document.querySelector('#bm-contain-header');
+              const dragBar = document.querySelector('#bm-bar-drag');
+              const coordsContainer = document.querySelector('#bm-contain-coords');
+              const coordsButton = document.querySelector('#bm-button-coords');
+              const createButton = document.querySelector('#bm-button-create');
+              const enableButton = document.querySelector('#bm-button-enable');
+              const disableButton = document.querySelector('#bm-button-disable');
+              const coordInputs = document.querySelectorAll('#bm-contain-coords input');
+              const simplifyButton = document.querySelector('#bm-button-simplify');
+              
+              // Pre-restore original dimensions when switching to maximized state
+              // This ensures smooth transition and prevents layout issues
+              if (!isMinimized) {
+                overlay.style.width = "auto";
+                overlay.style.maxWidth = "300px";
+                overlay.style.minWidth = "200px";
+                overlay.style.padding = "10px";
+              }
+              
+              // Define elements that should be hidden/shown during state transitions
+              // Each element is documented with its purpose for maintainability
+              const elementsToToggle = [
+                '#bm-overlay h1',                    // Main title "Blue Marble"
+                '#bm-contain-userinfo',              // User information section (username, droplets, level)
+                '#bm-overlay hr',                    // Visual separator lines
+                '#bm-contain-automation > *:not(#bm-contain-coords)', // Automation section excluding coordinates
+                '#bm-input-file-template',           // Template file upload interface
+                '#bm-contain-buttons-action',        // Action buttons container
+                `#${instance.outputStatusId}`,       // Status log textarea for user feedback
+                '#bm-contain-colorfilter'            // Color filter UI
+              ];
+              
+              // Apply visibility changes to all toggleable elements
+              elementsToToggle.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => {
+                  element.style.display = isMinimized ? 'none' : '';
+                });
               });
+              // Handle coordinate container and button visibility based on state
+              if (isMinimized) {
+                // ==================== MINIMIZED STATE CONFIGURATION ====================
+                // In minimized state, we hide ALL interactive elements except the icon and drag bar
+                // This creates a clean, unobtrusive interface that maintains only essential functionality
+                
+                // Hide coordinate input container completely
+                if (coordsContainer) {
+                  coordsContainer.style.display = 'none';
+                }
+                
+                // Hide coordinate button (pin icon)
+                if (coordsButton) {
+                  coordsButton.style.display = 'none';
+                }
+                
+                // Hide create template button
+                if (createButton) {
+                  createButton.style.display = 'none';
+                }
+
+                // Hide enable templates button
+                if (enableButton) {
+                  enableButton.style.display = 'none';
+                }
+
+                // Hide disable templates button
+                if (disableButton) {
+                  disableButton.style.display = 'none';
+                }
+                
+                // Hide simplify button
+                if (simplifyButton) {
+                  simplifyButton.style.display = 'none';
+                }
+                
+                // Hide all coordinate input fields individually (failsafe)
+                coordInputs.forEach(input => {
+                  input.style.display = 'none';
+                });
+                
+                // Apply fixed dimensions for consistent minimized appearance
+                // These dimensions were chosen to accommodate the icon while remaining compact
+                overlay.style.width = '60px';    // Fixed width for consistency
+                overlay.style.height = '76px';   // Fixed height (60px + 16px for better proportions)
+                overlay.style.maxWidth = '60px';  // Prevent expansion
+                overlay.style.minWidth = '60px';  // Prevent shrinking
+                overlay.style.padding = '8px';    // Comfortable padding around icon
+                
+                // Apply icon positioning for better visual centering in minimized state
+                // The 3px offset compensates for visual weight distribution
+                img.style.marginLeft = '3px';
+                
+                // Configure header layout for minimized state
+                header.style.textAlign = 'center';
+                header.style.margin = '0';
+                header.style.marginBottom = '0';
+                
+                // Ensure drag bar remains visible and properly spaced
+                if (dragBar) {
+                  dragBar.style.display = '';
+                  dragBar.style.marginBottom = '0.25em';
+                }
+              } else {
+                // ==================== MAXIMIZED STATE RESTORATION ====================
+                // In maximized state, we restore all elements to their default functionality
+                // This involves clearing all style overrides applied during minimization
+                
+                // Restore coordinate container to default state
+                if (coordsContainer) {
+                  coordsContainer.style.display = '';           // Show container
+                  coordsContainer.style.flexDirection = '';     // Reset flex layout
+                  coordsContainer.style.justifyContent = '';    // Reset alignment
+                  coordsContainer.style.alignItems = '';        // Reset alignment
+                  coordsContainer.style.gap = '';               // Reset spacing
+                  coordsContainer.style.textAlign = '';         // Reset text alignment
+                  coordsContainer.style.margin = '';            // Reset margins
+                }
+                
+                // Restore coordinate button visibility
+                if (coordsButton) {
+                  coordsButton.style.display = '';
+                }
+                
+                // Restore create button visibility and reset positioning
+                if (createButton) {
+                  createButton.style.display = '';
+                  createButton.style.marginTop = '';
+                }
+
+                // Restore enable button visibility and reset positioning
+                if (enableButton) {
+                  enableButton.style.display = '';
+                  enableButton.style.marginTop = '';
+                }
+
+                // Restore disable button visibility and reset positioning
+                if (disableButton) {
+                  disableButton.style.display = '';
+                  disableButton.style.marginTop = '';
+                }
+                
+                // Restore simplify button visibility
+                if (simplifyButton) {
+                  simplifyButton.style.display = '';
+                }
+                
+                // Restore all coordinate input fields
+                coordInputs.forEach(input => {
+                  input.style.display = '';
+                });
+                
+                // Reset icon positioning to default (remove minimized state offset)
+                img.style.marginLeft = '';
+                
+                // Restore overlay to responsive dimensions
+                overlay.style.padding = '10px';
+                
+                // Reset header styling to defaults
+                header.style.textAlign = '';
+                header.style.margin = '';
+                header.style.marginBottom = '';
+                
+                // Reset drag bar spacing
+                if (dragBar) {
+                  dragBar.style.marginBottom = '0.5em';
+                }
+                
+                // Remove all fixed dimensions to allow responsive behavior
+                // This ensures the overlay can adapt to content changes
+                overlay.style.width = '';
+                overlay.style.height = '';
+                
+                // If we're coming back from minimized, check if we should apply simplified mode
+                if (isSimplified) {
+                  setTimeout(() => applySimplifiedMode(), 10);
+                }
+              }
+              
+              // ==================== ACCESSIBILITY AND USER FEEDBACK ====================
+              // Update accessibility information for screen readers and tooltips
+              
+              // Update alt text to reflect current state for screen readers and tooltips
+              img.alt = isMinimized ? 
+                t('tooltip.minimized') : 
+                t('tooltip.maximized');
+              
+              // No status message needed - state change is visually obvious to users
             });
-            // Handle coordinate container and button visibility based on state
-            if (isMinimized) {
-              // ==================== MINIMIZED STATE CONFIGURATION ====================
-              // In minimized state, we hide ALL interactive elements except the icon and drag bar
-              // This creates a clean, unobtrusive interface that maintains only essential functionality
+          }
+        ).buildElement()
+        .addButton({'id': 'bm-button-simplify', 'style': 'background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px;', 'innerHTML': '◐', 'title': t('ui.toggle_simplified')}, 
+          (instance, button) => {
+            button.addEventListener('click', () => {
+              isSimplified = !isSimplified;
+              persistUIPrefs();
               
-              // Hide coordinate input container completely
-              if (coordsContainer) {
-                coordsContainer.style.display = 'none';
+              if (isSimplified) {
+                applySimplifiedMode();
+                instance.handleDisplayStatus(t('ui.simplified_mode') + ' ' + t('ui.enable'));
+              } else {
+                removeSimplifiedMode();
+                instance.handleDisplayStatus(t('ui.simplified_mode') + ' ' + t('ui.disable'));
               }
-              
-              // Hide coordinate button (pin icon)
-              if (coordsButton) {
-                coordsButton.style.display = 'none';
-              }
-              
-              // Hide create template button
-              if (createButton) {
-                createButton.style.display = 'none';
-              }
-
-              // Hide enable templates button
-              if (enableButton) {
-                enableButton.style.display = 'none';
-              }
-
-              // Hide disable templates button
-              if (disableButton) {
-                disableButton.style.display = 'none';
-              }
-              
-              // Hide all coordinate input fields individually (failsafe)
-              coordInputs.forEach(input => {
-                input.style.display = 'none';
-              });
-              
-              // Apply fixed dimensions for consistent minimized appearance
-              // These dimensions were chosen to accommodate the icon while remaining compact
-              overlay.style.width = '60px';    // Fixed width for consistency
-              overlay.style.height = '76px';   // Fixed height (60px + 16px for better proportions)
-              overlay.style.maxWidth = '60px';  // Prevent expansion
-              overlay.style.minWidth = '60px';  // Prevent shrinking
-              overlay.style.padding = '8px';    // Comfortable padding around icon
-              
-              // Apply icon positioning for better visual centering in minimized state
-              // The 3px offset compensates for visual weight distribution
-              img.style.marginLeft = '3px';
-              
-              // Configure header layout for minimized state
-              header.style.textAlign = 'center';
-              header.style.margin = '0';
-              header.style.marginBottom = '0';
-              
-              // Ensure drag bar remains visible and properly spaced
-              if (dragBar) {
-                dragBar.style.display = '';
-                dragBar.style.marginBottom = '0.25em';
-              }
-            } else {
-              // ==================== MAXIMIZED STATE RESTORATION ====================
-              // In maximized state, we restore all elements to their default functionality
-              // This involves clearing all style overrides applied during minimization
-              
-              // Restore coordinate container to default state
-              if (coordsContainer) {
-                coordsContainer.style.display = '';           // Show container
-                coordsContainer.style.flexDirection = '';     // Reset flex layout
-                coordsContainer.style.justifyContent = '';    // Reset alignment
-                coordsContainer.style.alignItems = '';        // Reset alignment
-                coordsContainer.style.gap = '';               // Reset spacing
-                coordsContainer.style.textAlign = '';         // Reset text alignment
-                coordsContainer.style.margin = '';            // Reset margins
-              }
-              
-              // Restore coordinate button visibility
-              if (coordsButton) {
-                coordsButton.style.display = '';
-              }
-              
-              // Restore create button visibility and reset positioning
-              if (createButton) {
-                createButton.style.display = '';
-                createButton.style.marginTop = '';
-              }
-
-              // Restore enable button visibility and reset positioning
-              if (enableButton) {
-                enableButton.style.display = '';
-                enableButton.style.marginTop = '';
-              }
-
-              // Restore disable button visibility and reset positioning
-              if (disableButton) {
-                disableButton.style.display = '';
-                disableButton.style.marginTop = '';
-              }
-              
-              // Restore all coordinate input fields
-              coordInputs.forEach(input => {
-                input.style.display = '';
-              });
-              
-              // Reset icon positioning to default (remove minimized state offset)
-              img.style.marginLeft = '';
-              
-              // Restore overlay to responsive dimensions
-              overlay.style.padding = '10px';
-              
-              // Reset header styling to defaults
-              header.style.textAlign = '';
-              header.style.margin = '';
-              header.style.marginBottom = '';
-              
-              // Reset drag bar spacing
-              if (dragBar) {
-                dragBar.style.marginBottom = '0.5em';
-              }
-              
-              // Remove all fixed dimensions to allow responsive behavior
-              // This ensures the overlay can adapt to content changes
-              overlay.style.width = '';
-              overlay.style.height = '';
-            }
-            
-            // ==================== ACCESSIBILITY AND USER FEEDBACK ====================
-            // Update accessibility information for screen readers and tooltips
-            
-            // Update alt text to reflect current state for screen readers and tooltips
-            img.alt = isMinimized ? 
-              t('tooltip.minimized') : 
-              t('tooltip.maximized');
-            
-            // No status message needed - state change is visually obvious to users
-          });
-        }
-      ).buildElement()
+            });
+          }
+        ).buildElement()
+      .buildElement()
       .addHeader(1, {'textContent': name}).buildElement()
     .buildElement()
 
@@ -666,6 +715,99 @@ function buildOverlayMain() {
       .buildElement()
     .buildElement()
   .buildOverlay(document.body);
+
+  // ------- Helper functions for simplified mode -------
+  function applySimplifiedMode() {
+    // Hide elements not needed in simplified mode
+    const elementsToHide = [
+      '#bm-contain-automation',           // All automation features
+      '#bm-input-file-template',          // Template upload
+      '#bm-contain-buttons-template',     // Template buttons
+      `#${overlayMain.outputStatusId}`,   // Status textarea
+      '#bm-contain-buttons-action',       // Action buttons except for the "Made by" text
+      '#bm-contain-colorfilter'           // Color filter UI
+    ];
+    
+    elementsToHide.forEach(selector => {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.style.display = 'none';
+      }
+    });
+    
+    // Hide language selector from userinfo
+    const languageContainer = document.querySelector('#bm-contain-userinfo > div[style*="display: flex"]');
+    if (languageContainer) {
+      languageContainer.style.display = 'none';
+    }
+    
+    // Show only the "Made by" text from action buttons
+    const actionContainer = document.querySelector('#bm-contain-buttons-action');
+    const madeByText = actionContainer?.querySelector('small');
+    if (actionContainer && madeByText) {
+      actionContainer.style.display = '';
+      // Hide all children except the "Made by" text
+      Array.from(actionContainer.children).forEach(child => {
+        if (child !== madeByText) {
+          child.style.display = 'none';
+        } else {
+          child.style.display = '';
+        }
+      });
+    }
+    
+    // Adjust overlay dimensions for simplified mode
+    const overlay = document.querySelector('#bm-overlay');
+    if (overlay) {
+      overlay.style.maxWidth = '220px';
+      overlay.style.minWidth = '180px';
+    }
+  }
+  
+  function removeSimplifiedMode() {
+    // Restore all hidden elements
+    const elementsToRestore = [
+      '#bm-contain-automation',
+      '#bm-input-file-template',
+      '#bm-contain-buttons-template',
+      `#${overlayMain.outputStatusId}`,
+      '#bm-contain-buttons-action',
+      '#bm-contain-colorfilter'
+    ];
+    
+    elementsToRestore.forEach(selector => {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.style.display = '';
+      }
+    });
+    
+    // Restore language selector
+    const languageContainer = document.querySelector('#bm-contain-userinfo > div[style*="display: flex"]');
+    if (languageContainer) {
+      languageContainer.style.display = 'flex';
+    }
+    
+    // Restore action buttons container children
+    const actionContainer = document.querySelector('#bm-contain-buttons-action');
+    if (actionContainer) {
+      Array.from(actionContainer.children).forEach(child => {
+        child.style.display = '';
+      });
+    }
+    
+    // Restore overlay dimensions
+    const overlay = document.querySelector('#bm-overlay');
+    if (overlay) {
+      overlay.style.maxWidth = '300px';
+      overlay.style.minWidth = '200px';
+    }
+  }
+  
+  // Apply simplified mode if it was previously enabled
+  if (isSimplified) {
+    setTimeout(() => applySimplifiedMode(), 100);
+  }
 
   // ------- Helper: Build the color filter list -------
   window.buildColorFilterList = function buildColorFilterList() {

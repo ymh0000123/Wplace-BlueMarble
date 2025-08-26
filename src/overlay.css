@@ -276,3 +276,39 @@ div:has(> #bm-input-file-template),
 #bm-overlay button:disabled, #bm-overlay-telemetry button:disabled {
   text-decoration: line-through;
 }
+
+/* Simplify mode toggle button */
+#bm-button-simplify {
+  background: none !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  cursor: pointer !important;
+  font-size: 18px !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  transition: color 0.2s ease, background-color 0.2s ease !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: auto !important;
+  min-height: auto !important;
+}
+
+#bm-button-simplify:hover {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+#bm-button-simplify:active {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Header flex container for icon and simplify button */
+#bm-contain-header > div[style*="display: flex"] {
+  align-items: center;
+  gap: 8px;
+}
+
+/* Adjust header image margin when in flex container */
+#bm-contain-header > div[style*="display: flex"] > img {
+  margin-right: 0;
+}

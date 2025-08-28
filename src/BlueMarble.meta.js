@@ -8,8 +8,8 @@
 // @supportURL   https://discord.gg/tpeBPy46hf
 // @homepageURL  https://bluemarble.camilledaguin.fr/
 // @icon         https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/051271c433a42db968a865b00f81bb979ee7d13f/dist/assets/Favicon.png
-// @updateURL    https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/BlueMarble.user.js
-// @downloadURL  https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/main/dist/BlueMarble.user.js
+// @updateURL    https://wplace.xiao-feishu.top/BlueMarble.user.js
+// @downloadURL  https://wplace.xiao-feishu.top/BlueMarble.user.js
 // @match        https://wplace.live/*
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
@@ -17,7 +17,7 @@
 // @grant        GM_getValue
 // @grant        GM_xmlhttpRequest
 // @connect      telemetry.thebluecorner.net
-// @resource     CSS-BM-File https://raw.githubusercontent.com/SwingTheVine/Wplace-BlueMarble/051271c433a42db968a865b00f81bb979ee7d13f/dist/BlueMarble.user.css
+// @resource     CSS-BM-File https://wplace.xiao-feishu.top/BlueMarble.user.css
 // ==/UserScript==
 
 // Wplace  --> https://wplace.live

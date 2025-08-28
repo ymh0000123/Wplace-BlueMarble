@@ -1,0 +1,12 @@
+{
+    "title": "Blue Marble - AI增强版",
+    "navigation-bar": [
+        {
+            "icon": "https://picture-2.xiao-feishu.top/picture/6.webp"
+        },
+        {
+            "name": "Home",
+            "url": "/"
+        }
+    ]
+}

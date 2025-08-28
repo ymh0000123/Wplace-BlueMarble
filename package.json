@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "node build/build.js",
-    "patch": "node build/patch.js && npm run build"
+    "patch": "node build/patch.js && npm run build",
+    "install-web": "node build/install-web.js"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
